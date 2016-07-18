@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 ##
 # A simple program to normalized an XML file by sorting all elements and the attributes
 # This is useful when comparing two XML files such as REST WADL files.
