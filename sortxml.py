@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 ##
-# A simple program to normalized an XML file by sorting all elements and the attributes
+# A simple program to normalized an XML file by sorting all elements and/or the attributes
 # This is useful when comparing two XML files such as REST WADL files.
 #
 import sys
@@ -38,12 +38,19 @@ def sortedAttributes ( attrib ):
 ##
 # Sort all sub-elements and attributes of a given XML root element
 #
-def sort (ele_root):
+def sort (ele_root, bSortEle=True, bSortAttr=True):
     
     # Construct a copy of the root element,
     # with the same tag and ordered attributes,
     # And set the namespace map the same as original
-    sorted_root = etree.Element(ele_root.tag, sortedAttributes (ele_root.attrib), nsmap=ele_root.nsmap)
+
+    # Get a sorted or unsorted attribute list
+    if (bSortAttr):
+        attrib = sortedAttributes(ele_root.attrib)
+    else:
+        attrib = ele_root.attrib
+
+    sorted_root = etree.Element(ele_root.tag, attrib, nsmap=ele_root.nsmap)
 
     # Set the constructed copy with the same text
     sorted_root.text = ele_root.text
@@ -57,8 +64,10 @@ def sort (ele_root):
        new_ele = sort (ele)
        sorted_subs.append (new_ele)
 
-    # Sort all the children
-    sorted_subs.sort (cmp_elements)
+    # Sort all the children if bSortEle is true
+    if (bSortEle):
+        sorted_subs.sort (cmp_elements)
+
 
     # Append the sorted children to the copy of the root
     for ele in sorted_subs:
@@ -68,21 +77,36 @@ def sort (ele_root):
 
 
 # Read argument as input xml file, and sorted xml file
-
-if (len(sys.argv) != 3):
+if (len(sys.argv) < 3):
    print "Normalize an XML file by sorting all elements and attributes"
-   print "Usage: sortxml.py <input_file>, <output_file>"
+   print "Usage: sortxml.py <input_file>, <output_file> [-ne] [-na]"
+   print "   -ne  Not sorting elements"
+   print "   -na  Not sorting attributes"
    sys.exit(1)
 
 in_file = sys.argv[1]
 out_file = sys.argv[2]
+bSortEle = True
+bSortAttr = True
+
+if (len(sys.argv) > 3):
+    if sys.argv[3] == '-ne':
+       bSortEle = False
+    elif (sys.argv[3] == '-na'):
+       bSortAttr = False
+
+if len(sys.argv) > 4:
+    if sys.argv[4] == '-ne':
+        bSortEle = False
+    elif sys.argv[4] == '-na':
+        bSortAttr = False
 
 # Parse the input by removing all blank text (in order not to get conflict with pretty print)
 parser = etree.XMLParser(remove_blank_text=True)
 tree = etree.parse(in_file, parser)
 
 # Get sorted XML root
-sorted_root = sort (tree.getroot())
+sorted_root = sort (tree.getroot(), bSortEle, bSortAttr)
 
 # Output
 f = open(out_file, 'w')
